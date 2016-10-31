@@ -46,7 +46,9 @@
     <Compile Include="DataTypeSerializer.cs" />
     <Compile Include="Globals.cs" />
     <Compile Include="Hash.cs" />
-    <Compile Include="Program.cs" />
+    <Compile Include="Program.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Service.cs" />
     <Compile Include="TinyKeyValueStorage.cs" />

@@ -1,0 +1,137 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace TinyKeyValueStorage
+{
+    public class TinyKeyValueStorage
+    {
+        int yyy = 0;
+        public bool open(string storage_name, params string[] parameters)
+        {
+            bool bool_ret = false;
+
+
+            return bool_ret;
+        }
+        /*
+        public bool set(string path, object value)
+        {
+            bool bool_ret = false;
+
+            //int i = 0, icount = Globals.storage_collections_delim.Length + Globals.storage_keys_delim.Length;
+            /*
+            char[] test_delim = new char[3];
+            test_delim[0] = Globals.storage_collections_delim[0];
+            test_delim[1] = Globals.storage_keys_delim[0];
+            test_delim[2] = Globals.storage_keys_delim[1];
+            string[] sarr = path.Split(test_delim, StringSplitOptions.RemoveEmptyEntries);
+            *
+            //last element is KEY
+
+            Globals.ToSave.DocToSave _doc = new Globals.ToSave.DocToSave();
+            _doc.name = path;
+            _doc.data_type = Globals._dataserializer.returnTypeAndRawByteArray(ref value, out _doc.data);
+            Globals.ToSave.lst_docs_to_save.Add(_doc);
+
+            //yyy++;
+            //if (yyy == 1000)
+            //{ Console.Title = Globals.lst_docs_to_save.Count.ToString(); yyy = 0; }
+
+
+            //check for path
+
+            //add key
+
+
+            return bool_ret;
+        }
+        */
+        public bool set2(Document document)
+        {
+            bool bool_ret = true;
+
+            try
+            {
+                byte[] b_out;
+                string sname = "";
+                Globals.ToSave.DocToSave _doc = new Globals.ToSave.DocToSave();
+                _doc.document_id = BitConverter.GetBytes(Globals.storage_document_id);
+                //_doc.document_tag_name = Encoding.ASCII.GetBytes(document.tag);
+                document.Add("document.tag",document.tag); //add document_tag as one of attributes
+                _doc.document_tag_hash = BitConverter.GetBytes(Globals._hash.CreateHash64bit(Encoding.ASCII.GetBytes(document.tag)));
+                for (int i = 0; i < document.GetCount(); i++)
+                {
+                    sname = document.key[i];
+                    _doc.lst_name.Add(sname);
+                    _doc.lst_hash.Add(BitConverter.GetBytes(Globals._hash.CreateHash64bit(Encoding.ASCII.GetBytes(sname))));
+                    _doc.lst_data_type.Add(Globals._dataserializer.returnTypeAndRawByteArray(document.value[i], out b_out));
+                    _doc.lst_data.Add(b_out);
+                }
+
+                Globals.ToSave.lst_docs_to_save.Add(_doc);
+                Globals.storage_document_id++;
+                Globals.ToSave.index_chunks_count += (document.GetCount() % Globals.storage_max_attributes_per_index_on_disk); //chunks to save
+            }
+            catch (Exception) { }
+
+            //yyy++;
+            //if (yyy == 1000)
+            //{ Console.Title = Globals.lst_docs_to_save.Count.ToString(); yyy = 0; }
+
+            //return
+            return bool_ret;
+        }
+
+        public bool get(string query)
+        {
+            bool bool_ret = false;
+
+            var ggg = Globals.ToSave.lst_docs_to_save;
+
+            return bool_ret;
+        }
+
+        public bool update(string path, object new_value)
+        {
+            bool bool_ret = false;
+
+
+
+            return bool_ret;
+        }
+
+        public bool commit()
+        {
+            bool bool_ret = false;
+
+            if (Globals.ToSave.lst_docs_to_save.Count == 0) { return false; }
+
+            byte[] b_docs = new byte[0];
+            b_docs = Globals._converter.DocumentsToBytes();
+
+            return bool_ret;
+        }
+
+        //
+        //SPECIALS
+        //
+        //store info from client side
+        public class Document
+        {
+            public string tag = ""; //main identifier of the document (something like 'folder' in filesystems)
+            internal List<string> key = new List<string>(10);
+            internal List<dynamic> value = new List<dynamic>(10);
+
+            public Document(string tag) { this.tag = tag; }
+            public Document(string key, dynamic value)
+            { this.Add(key, value); }
+            public void Add(string key, dynamic value)
+            { this.key.Add(key); this.value.Add(value); }
+            public int GetCount()
+            { return this.key.Count; }
+        }
+
+    }
+}
