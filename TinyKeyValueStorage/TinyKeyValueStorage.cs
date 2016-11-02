@@ -119,15 +119,18 @@ namespace TinyKeyValueStorage
             b_docs = Globals._converter.DocumentsToBytes(out b_indexes); //get documents + indexes
 
             //write
-            if (Globals._io.is_data_index() == false)
+            if (Globals._io.is_open() == false)
+            { Globals._io.open_storage(); }//reopen storage                            
+            //write
+            bool_ret = Globals._io.write(ref b_indexes, IO.IO_FILE.INDEX);
+            if (bool_ret == true) //write & close connection
             {
-                Globals._io.open_storage(); //reopen storage
-                //write
-                bool_ret = Globals._io.write(ref b_indexes, IO.IO_FILE.INDEX);
-                if (bool_ret == true)
-                { bool_ret = Globals._io.write(ref b_docs, IO.IO_FILE.DATA); }
-
+                bool_ret = Globals._io.write(ref b_docs, IO.IO_FILE.DATA);
+                bool_ret = Globals._io.close();
             }
+            else //close connection
+            { Globals._io.close(); }
+
             //result
             return bool_ret;
         }

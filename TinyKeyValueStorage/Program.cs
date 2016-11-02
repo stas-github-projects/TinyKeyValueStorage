@@ -26,12 +26,16 @@ namespace TinyKeyValueStorage_test
                 _doc.Add("model", i);
                 _doc.Add("price", 123);
                 _doc.Add("color", "black");
-                _doc.Add("info", "higfhgih");
+                _doc.Add("info", "Coolest toy in the history! Buy it!");
                 _storage.set2(_doc);
             }
 
+            //s.Start();
+            //s.Stop();
             _storage.commit();            
             //_storage.get("hj");
+
+            s.Stop();
 
             Console.WriteLine("\ntimings: {0} sec / {1} msec / {2} ticks", s.Elapsed.Seconds, s.ElapsedMilliseconds, s.ElapsedTicks);
             Console.ReadKey();

@@ -12,15 +12,15 @@ namespace TinyKeyValueStorage
         internal byte[] DocumentsToBytes(out byte[] b_indexes)
         {
             int idocscount = Globals.ToSave.lst_docs_to_save.Count;
-            //active (1) + doc_id (8) + doc_tag_hash (8) + doc_full_index_length (4)
+            //active (1) + doc_id (8)(-deprecated) + doc_tag_hash (8) + doc_full_index_length (4)
             //attributes
-            //active (1) + data_type (1) + attrib_hash (8) + attrib_data_len (4) + attrib_data_pos (8)/attrib_data
-            int iindexsize = (1 + 8 + 8 + 4) * idocscount + (1 + 1 + 8 + 4 + 8) * Globals.ToSave.i_docs_tags_to_save;//Globals.storage_max_attributes_per_index_on_disk;
+            //active (1) + data_type (1) + attrib_hash (8) + attrib_data_len (4) (-deprecated) + attrib_data_pos (8)/attrib_data
+            int iindexsize = (1 + 8 + 4) * idocscount + (1 + 1 + 8 + 4 + 8) * Globals.ToSave.i_docs_tags_to_save;//Globals.storage_max_attributes_per_index_on_disk;
             //active (1) + doc_id (8) + doc_tag_hash (8) - doc_tag_name stores in attributes as 'document.tag'
             //attributes
             //active (1) + data_type (1) + attrib_hash (8) + attrib_name (X) + attrib_data_len (4) + attrib_data_pos (8)
             int idocsize = (1 + 8 + 8) * idocscount + ((1 + 1 + 8 + Globals.storage_max_attribute_name_length + 4) * Globals.ToSave.i_docs_tags_to_save) + Globals.ToSave.i_docs_data_to_save;
-            int i = 0, idoccount=idocsize;// = idocsize * idocscount;
+            int i = 0, idoccount = idocsize;// = idocsize * idocscount;
             int iindexcount = iindexsize;// *idocscount;
             int idocpos = 0, iindexpos = 0;
 
@@ -29,19 +29,19 @@ namespace TinyKeyValueStorage
             byte[] b_docs = new byte[idoccount];
             b_indexes = new byte[iindexcount];
 
-            //if (document == null) { return new byte[0]; } //error
+            //go through all documents to save
             for (i = 0; i < idocscount; i++)
             {
-                //indexes
+                //index header info
                 b_indexes[iindexpos] = 1; iindexpos++; //active
-                Globals._service.InsertBytes(ref b_indexes, Globals.ToSave.lst_docs_to_save[i].document_id, iindexpos); iindexpos += 8; //doc_id
+                //Globals._service.InsertBytes(ref b_indexes, Globals.ToSave.lst_docs_to_save[i].document_id, iindexpos); iindexpos += 8; //doc_id
                 Globals._service.InsertBytes(ref b_indexes, Globals.ToSave.lst_docs_to_save[i].document_tag_hash, iindexpos); iindexpos += 8; //doc_tag_hash
                 Globals._service.InsertBytes(ref b_indexes, Globals.ToSave.lst_docs_to_save[i].document_index_length, iindexpos); iindexpos += 4; //doc_full_index_length
 
-                //documents
+                //document header info
                 b_docs[idocpos] = 1; idocpos++; //active
                 Globals._service.InsertBytes(ref b_docs, Globals.ToSave.lst_docs_to_save[i].document_id, idocpos); idocpos += 8; //doc_id
-                Globals._service.InsertBytes(ref b_docs, Globals.ToSave.lst_docs_to_save[i].document_tag_hash, idocpos); idocpos += 8; //doc_rag_hash
+                Globals._service.InsertBytes(ref b_docs, Globals.ToSave.lst_docs_to_save[i].document_tag_hash, idocpos); idocpos += 8; //doc_tag_hash
 
                 //get all attributes
                 for (int j = 0; j < Globals.ToSave.lst_docs_to_save[i].lst_hash.Count; j++)
