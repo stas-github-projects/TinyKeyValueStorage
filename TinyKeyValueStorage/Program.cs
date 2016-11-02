@@ -19,7 +19,7 @@ namespace TinyKeyValueStorage_test
 
             _storage.open("test");
 
-            for (int i = 0; i < 100000; i++)
+            for (int i = 0; i < 10000; i++)
             {
                 TinyKeyValueStorage.TinyKeyValueStorage.Document _doc = new TinyKeyValueStorage.TinyKeyValueStorage.Document("goods_toys");
                 _doc.Add("title","toy_fx");

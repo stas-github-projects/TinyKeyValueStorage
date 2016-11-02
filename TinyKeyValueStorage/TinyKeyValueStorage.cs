@@ -12,6 +12,8 @@ namespace TinyKeyValueStorage
         {
             bool bool_ret = false;
 
+            Globals.storage_filename = storage_name;
+            bool_ret = Globals._io.open_storage();
 
             return bool_ret;
         }
@@ -68,11 +70,15 @@ namespace TinyKeyValueStorage
                     _doc.lst_hash.Add(BitConverter.GetBytes(Globals._hash.CreateHash64bit(Encoding.ASCII.GetBytes(sname))));
                     _doc.lst_data_type.Add(Globals._dataserializer.returnTypeAndRawByteArray(document.value[i], out b_out));
                     _doc.lst_data.Add(b_out);
+                    _doc.lst_data_len.Add(b_out.Length);
+                    Globals.ToSave.i_docs_data_to_save += b_out.Length;
                 }
 
+                _doc.document_index_length = BitConverter.GetBytes((1 + 8 + 8 + 4 + (1 + 1 + 8 + 4 + 8) * document.GetCount()));
+                Globals.ToSave.i_docs_tags_to_save += document.GetCount(); //max attributes to save
                 Globals.ToSave.lst_docs_to_save.Add(_doc);
                 Globals.storage_document_id++;
-                Globals.ToSave.index_chunks_count += (document.GetCount() % Globals.storage_max_attributes_per_index_on_disk); //chunks to save
+                //Globals.ToSave.index_chunks_count += (document.GetCount() % Globals.storage_max_attributes_per_index_on_disk); //chunks to save
             }
             catch (Exception) { }
 
@@ -109,8 +115,20 @@ namespace TinyKeyValueStorage
             if (Globals.ToSave.lst_docs_to_save.Count == 0) { return false; }
 
             byte[] b_docs = new byte[0];
-            b_docs = Globals._converter.DocumentsToBytes();
+            byte[] b_indexes = new byte[0];
+            b_docs = Globals._converter.DocumentsToBytes(out b_indexes); //get documents + indexes
 
+            //write
+            if (Globals._io.is_data_index() == false)
+            {
+                Globals._io.open_storage(); //reopen storage
+                //write
+                bool_ret = Globals._io.write(ref b_indexes, IO.IO_FILE.INDEX);
+                if (bool_ret == true)
+                { bool_ret = Globals._io.write(ref b_docs, IO.IO_FILE.DATA); }
+
+            }
+            //result
             return bool_ret;
         }
 

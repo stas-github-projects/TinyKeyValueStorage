@@ -46,6 +46,7 @@
     <Compile Include="DataTypeSerializer.cs" />
     <Compile Include="Globals.cs" />
     <Compile Include="Hash.cs" />
+    <Compile Include="IO.cs" />
     <Compile Include="Program.cs">
       <SubType>Code</SubType>
     </Compile>
