@@ -18,8 +18,8 @@ namespace TinyKeyValueStorage_test
 
 
             _storage.open("test");
-
-            for (int i = 0; i < 10000; i++)
+            /*
+            for (int i = 0; i < 1000; i++)
             {
                 TinyKeyValueStorage.TinyKeyValueStorage.Document _doc = new TinyKeyValueStorage.TinyKeyValueStorage.Document("goods_toys");
                 _doc.Add("title","toy_fx");
@@ -27,13 +27,16 @@ namespace TinyKeyValueStorage_test
                 _doc.Add("price", 123);
                 _doc.Add("color", "black");
                 _doc.Add("info", "Coolest toy in the history! Buy it!");
-                _storage.set2(_doc);
+                _storage.set(_doc);
             }
+            _storage.commit();   
+            /**/
 
             //s.Start();
             //s.Stop();
-            _storage.commit();            
-            //_storage.get("hj");
+         
+            _storage.query("document.tag='good_toys', 'model'>10, 'model'<30");
+
 
             s.Stop();
 

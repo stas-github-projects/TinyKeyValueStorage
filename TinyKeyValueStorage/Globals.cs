@@ -41,6 +41,11 @@ namespace TinyKeyValueStorage
                 internal List<byte[]> lst_data = new List<byte[]>(10);
                 internal List<int> lst_data_len = new List<int>(10);
             }
+
+            internal static void flush()
+            {
+                lst_docs_to_save.Clear(); i_docs_data_to_save = 0; i_docs_tags_to_save = 0;
+            }
         }
 
     }

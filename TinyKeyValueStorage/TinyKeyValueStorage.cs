@@ -7,7 +7,7 @@ namespace TinyKeyValueStorage
 {
     public class TinyKeyValueStorage
     {
-        int yyy = 0;
+        //int yyy = 0;
         public bool open(string storage_name, params string[] parameters)
         {
             bool bool_ret = false;
@@ -50,9 +50,18 @@ namespace TinyKeyValueStorage
             return bool_ret;
         }
         */
-        public bool set2(Document document)
+        public bool set(Document document)
         {
-            bool bool_ret = true;
+            //bool bool_ret = false;
+            Task<bool> task_set = set_async(document);
+            task_set.Wait();
+            //result
+            return task_set.Result;
+        }
+
+        private async Task<bool> set_async(Document document)
+        {
+            bool bool_ret = false;
 
             try
             {
@@ -74,29 +83,39 @@ namespace TinyKeyValueStorage
                     Globals.ToSave.i_docs_data_to_save += b_out.Length;
                 }
 
-                _doc.document_index_length = BitConverter.GetBytes((1 + 8 + 8 + 4 + (1 + 1 + 8 + 4 + 8) * document.GetCount()));
+                _doc.document_index_length = BitConverter.GetBytes((1 + 8 + 4 + (1 + 1 + 8 + 4 + 8) * document.GetCount()));
                 Globals.ToSave.i_docs_tags_to_save += document.GetCount(); //max attributes to save
                 Globals.ToSave.lst_docs_to_save.Add(_doc);
                 Globals.storage_document_id++;
+                bool_ret = true;
                 //Globals.ToSave.index_chunks_count += (document.GetCount() % Globals.storage_max_attributes_per_index_on_disk); //chunks to save
             }
-            catch (Exception) { }
-
-            //yyy++;
-            //if (yyy == 1000)
-            //{ Console.Title = Globals.lst_docs_to_save.Count.ToString(); yyy = 0; }
+            catch (Exception) { return false; }
 
             //return
-            return bool_ret;
+            return await Task.FromResult(bool_ret);
         }
 
-        public bool get(string query)
+        public bool query(string query)
         {
             bool bool_ret = false;
 
-            var ggg = Globals.ToSave.lst_docs_to_save;
+            //parse query
+            Globals._converter.parse_query(query);
+            //start search
+            Task<bool> task_query = query_async();
+            task_query.Wait();
 
             return bool_ret;
+        }
+
+        private async Task<bool> query_async()
+        {
+            bool bool_ret = false;
+
+
+
+            return await Task.FromResult(bool_ret);
         }
 
         public bool update(string path, object new_value)
@@ -109,6 +128,16 @@ namespace TinyKeyValueStorage
         }
 
         public bool commit()
+        {
+            Task<bool> task_commit = commit_async();
+            task_commit.Wait();
+            //clear
+            Globals.ToSave.flush();
+            //result
+            return task_commit.Result;
+        }
+
+        private async Task<bool> commit_async()
         {
             bool bool_ret = false;
 
@@ -132,7 +161,7 @@ namespace TinyKeyValueStorage
             { Globals._io.close(); }
 
             //result
-            return bool_ret;
+            return await Task.FromResult(bool_ret);
         }
 
         //

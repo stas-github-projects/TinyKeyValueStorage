@@ -75,7 +75,7 @@ namespace TinyKeyValueStorage
                     this.filestream_data.Position = 0;
                 }
             }
-            catch (Exception e) { bool_ret = false; }
+            catch (Exception) { bool_ret = false; }
 
             return bool_ret;
         }

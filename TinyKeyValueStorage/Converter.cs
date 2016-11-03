@@ -68,5 +68,14 @@ namespace TinyKeyValueStorage
             return b_docs;
         }
 
+        internal bool parse_query(string query)
+        {
+            bool bool_ret = false;
+
+
+
+            return bool_ret;
+        }
+
     }
 }
