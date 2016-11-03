@@ -68,13 +68,88 @@ namespace TinyKeyValueStorage
             return b_docs;
         }
 
+        private string stemp = "";
+
         internal bool parse_query(string query)
         {
             bool bool_ret = false;
 
+            string operators = "=<>!";
+            int i = 0, ilen = query.Length, istart = 0;
+            bool bool_text = false;
 
+            char ch;
+
+            //parse
+            for (i = 0; i < ilen; i++)
+            {
+                ch = query[i];
+                if (ch == '\'') //text surrounds with ' '
+                {
+                    if (bool_text == false)
+                    {
+                        if (i > istart) //save prev operator
+                        {
+                            stemp = query.Substring(istart, i - istart);
+                            Globals.ToQuery.lst_operator.Add(get_operator(stemp[0]));
+                        } 
+                        bool_text = true; istart = i+1;
+                    }
+                    else //save value
+                    {
+                        stemp = query.Substring(istart, i - istart); //value
+                        Globals.ToQuery.lst_value.Add(stemp);
+                        //Globals.ToQuery.lst_operator.Add(ch.ToString()); //operator
+                        bool_text = false; istart = i + 1;
+                    }
+                }
+                else if (bool_text==false && operators.Contains(ch.ToString()))
+                {
+                    stemp = query.Substring(istart, i - istart);
+                    Globals.ToQuery.lst_attribute.Add(get_attribute_hash(stemp)); //attribute
+                    Globals.ToQuery.lst_operator.Add(get_operator(ch)); //operator
+                    istart = i+1;
+                }
+                else if (bool_text == false)
+                {
+                    if (ch == ',' || ch == ' ' || ch==';')
+                    {
+                        if (i > istart) //save prev value
+                        {
+                            stemp = query.Substring(istart, i - istart);
+                            Globals.ToQuery.lst_value.Add(stemp);
+                        } 
+                        istart = i+1;
+                    }
+                }
+            }//for
+            //add remains
+            if (i > istart) //save prev value
+            {
+                stemp = query.Substring(istart, i - istart);
+                Globals.ToQuery.lst_value.Add(stemp);
+            } 
 
             return bool_ret;
+        }
+
+
+        private ulong get_attribute_hash(string sattribute)
+        {
+            return Globals._hash.CreateHash64bit(Encoding.ASCII.GetBytes(sattribute));
+        }
+
+        private byte get_operator(char soperator)
+        {
+            //"=<>!";
+            switch (soperator)
+            {
+                case '=': return 1;
+                case '<': return 2;
+                case '>': return 3;
+                case '!': return 4;
+                default: return 0;
+            }
         }
 
     }

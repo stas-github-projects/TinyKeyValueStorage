@@ -35,7 +35,7 @@ namespace TinyKeyValueStorage_test
             //s.Start();
             //s.Stop();
          
-            _storage.query("document.tag='good_toys', 'model'>10, 'model'<30");
+            _storage.query("tag='good_toys',model>10, model<30");
 
 
             s.Stop();

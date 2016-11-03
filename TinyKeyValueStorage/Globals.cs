@@ -48,5 +48,17 @@ namespace TinyKeyValueStorage
             }
         }
 
+        internal static class ToQuery
+        {
+            internal static List<ulong> lst_attribute = new List<ulong>(10); //model
+            internal static List<byte> lst_operator = new List<byte>(10); // >
+            internal static List<dynamic> lst_value = new List<dynamic>(10); // 10
+
+            internal static void flush()
+            {
+                lst_attribute.Clear(); lst_operator.Clear(); lst_value.Clear();
+            }
+        }
+
     }
 }
