@@ -22,13 +22,24 @@ namespace TinyKeyValueStorage
         
         internal static class ToSave
         {
-            internal static List<DocToSave> lst_docs_to_save = new List<DocToSave>(10);
-            internal static int i_docs_tags_to_save = 0;
-            internal static int i_docs_data_to_save = 0;
-            //internal static int index_chunks_count = 0; //how much chunks of all records it need to be created for index file
+            internal static List<byte[]> lst_index_to_save = new List<byte[]>(10);
+            internal static List<byte[]> lst_docs_to_save = new List<byte[]>(10);
 
+            internal static int i_docs_index_full_length = 0;
+            internal static int i_docs_index_header_length = 1 + 8 + 8 + 4; //active [1], doc_id [8], document_tag [8], full_index_length [4]
+            internal static int i_docs_index_element_length = 1 + 1 + 8 + 8; //active_attrib [1], attrib_data_len_more_than_8 [1], attrib_hash [8], attrib_pos [8]
+            
+            internal static int i_docs_data_full_length = 0;
+            //active [1], doc_id [8], document_tag [8], created_at [8], changed_at [8]
+            internal static int i_docs_data_header_length = 1 + 8 + 8 + 8 + 8;
+            //active [1], data_type [1], attrib_hash [8], attrib_name [x], attrib_len [4] + data_len        
+            internal static int i_docs_data_element_length = 1 + 1 + 8 + Globals.storage_max_attribute_name_length + 4;
+
+
+            internal static long l_virtual_data_length = 0;
 
             //store info from server side
+            /*
             internal class DocToSave
             {
                 internal byte[] document_tag_hash;
@@ -40,11 +51,14 @@ namespace TinyKeyValueStorage
                 internal List<byte> lst_data_type = new List<byte>(10);
                 internal List<byte[]> lst_data = new List<byte[]>(10);
                 internal List<int> lst_data_len = new List<int>(10);
+                internal List<long> lst_data_pos = new List<long>(10); //save offset
             }
+            */
 
             internal static void flush()
             {
-                lst_docs_to_save.Clear(); i_docs_data_to_save = 0; i_docs_tags_to_save = 0;
+                lst_docs_to_save.Clear(); lst_index_to_save.Clear(); i_docs_data_full_length = 0; i_docs_index_full_length = 0;
+                i_docs_data_full_length = 0; i_docs_index_full_length = 0; l_virtual_data_length = 0;
             }
         }
 

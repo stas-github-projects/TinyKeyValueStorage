@@ -50,6 +50,15 @@ namespace TinyKeyValueStorage
             else { return true; }
         }
 
+        internal long docs_file_length()
+        {
+            FileInfo finfo = new FileInfo(Globals.storage_filename + ".tkd");
+            if (finfo.Exists)
+            { return finfo.Length; }
+            else
+            { return 0; }
+        }
+
         internal bool close()
         {
             try { this.filestream_index.Close(); this.filestream_data.Close(); return true; }

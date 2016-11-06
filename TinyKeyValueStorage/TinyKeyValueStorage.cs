@@ -17,39 +17,7 @@ namespace TinyKeyValueStorage
 
             return bool_ret;
         }
-        /*
-        public bool set(string path, object value)
-        {
-            bool bool_ret = false;
 
-            //int i = 0, icount = Globals.storage_collections_delim.Length + Globals.storage_keys_delim.Length;
-            /*
-            char[] test_delim = new char[3];
-            test_delim[0] = Globals.storage_collections_delim[0];
-            test_delim[1] = Globals.storage_keys_delim[0];
-            test_delim[2] = Globals.storage_keys_delim[1];
-            string[] sarr = path.Split(test_delim, StringSplitOptions.RemoveEmptyEntries);
-            *
-            //last element is KEY
-
-            Globals.ToSave.DocToSave _doc = new Globals.ToSave.DocToSave();
-            _doc.name = path;
-            _doc.data_type = Globals._dataserializer.returnTypeAndRawByteArray(ref value, out _doc.data);
-            Globals.ToSave.lst_docs_to_save.Add(_doc);
-
-            //yyy++;
-            //if (yyy == 1000)
-            //{ Console.Title = Globals.lst_docs_to_save.Count.ToString(); yyy = 0; }
-
-
-            //check for path
-
-            //add key
-
-
-            return bool_ret;
-        }
-        */
         public bool set(Document document)
         {
             //bool bool_ret = false;
@@ -63,30 +31,117 @@ namespace TinyKeyValueStorage
         {
             bool bool_ret = false;
 
+            //buffers
+            //byte b_type;
+            byte[] b_doc_tag;
+            byte[] b_data;
+            //byte[] b_data_len;
+            byte[] b_hash;
+            byte[] b_attrib_name;
+            //string sname = "";
+
+            //add document.tag
+            document.Add("document.tag", document.tag); //add document_tag as one of attributes
+            b_doc_tag = BitConverter.GetBytes(Globals._hash.CreateHash64bit(Encoding.ASCII.GetBytes(document.tag)));
+
+            int i = 0, i_index_len = 0, i_doc_len = 0, i_index_pos = 0, i_docs_pos = 0, i_data_len = 0, i_attrib_count = document.key.Count;
+            long l_time = DateTime.Now.Ticks, l_pos_to_attrib = 0;
+            if (Globals.ToSave.l_virtual_data_length == 0)
+            { Globals.ToSave.l_virtual_data_length = Globals._io.docs_file_length(); }
+
             try
             {
-                byte[] b_out;
-                string sname = "";
-                Globals.ToSave.DocToSave _doc = new Globals.ToSave.DocToSave();
-                _doc.document_id = BitConverter.GetBytes(Globals.storage_document_id);
-                //_doc.document_tag_name = Encoding.ASCII.GetBytes(document.tag);
-                document.Add("document.tag",document.tag); //add document_tag as one of attributes
-                _doc.document_tag_hash = BitConverter.GetBytes(Globals._hash.CreateHash64bit(Encoding.ASCII.GetBytes(document.tag)));
-                for (int i = 0; i < document.GetCount(); i++)
+                //index
+                //List<byte[]> lst_index = new List<byte[]>(10);
+                byte[] b_index = new byte[0];
+                //docs
+                //List<byte[]> lst_docs = new List<byte[]>(10);
+                byte[] b_docs = new byte[0];
+
+                //data buffer
+                List<byte> lst_data_type = new List<byte>();
+                List<byte[]> lst_data = new List<byte[]>();
+                List<int> lst_data_len = new List<int>();
+
+                //convert all data to byte arrays
+
+                //get data lengths
+                //go thru all attributes and get all data
+                for (i = 0; i < i_attrib_count; i++)
                 {
-                    sname = document.key[i];
-                    _doc.lst_name.Add(sname);
-                    _doc.lst_hash.Add(BitConverter.GetBytes(Globals._hash.CreateHash64bit(Encoding.ASCII.GetBytes(sname))));
-                    _doc.lst_data_type.Add(Globals._dataserializer.returnTypeAndRawByteArray(document.value[i], out b_out));
-                    _doc.lst_data.Add(b_out);
-                    _doc.lst_data_len.Add(b_out.Length);
-                    Globals.ToSave.i_docs_data_to_save += b_out.Length;
+                    lst_data_type.Add(Globals._dataserializer.returnTypeAndRawByteArray(document.value[i], out b_data));
+                    lst_data.Add(b_data);
+                    lst_data_len.Add(b_data.Length);
+                    i_data_len += b_data.Length;
                 }
 
-                _doc.document_index_length = BitConverter.GetBytes((1 + 8 + 4 + (1 + 1 + 8 + 4 + 8) * document.GetCount()));
-                Globals.ToSave.i_docs_tags_to_save += document.GetCount(); //max attributes to save
-                Globals.ToSave.lst_docs_to_save.Add(_doc);
+                //headers
+                //index - active [1], doc_id [8], document_tag [8], full_index_length [4] - skip last element - 'document.tag'
+                i_index_len = Globals.ToSave.i_docs_index_header_length + (Globals.ToSave.i_docs_index_element_length * (i_attrib_count - 1));
+                b_index = new byte[i_index_len];
+                Globals._service.InsertBytes(ref b_index, (byte)1, i_index_pos); i_index_pos++; //active
+                Globals._service.InsertBytes(ref b_index, BitConverter.GetBytes(Globals.storage_document_id), i_index_pos); i_index_pos+=8; //doc_id
+                Globals._service.InsertBytes(ref b_index, b_doc_tag, i_index_pos); i_index_pos+=8; //doc_tag
+                Globals._service.InsertBytes(ref b_index,  BitConverter.GetBytes(i_index_len), i_index_pos); i_index_pos+=4; //index_full_len
+
+                //docs - active [1], data_type [1], attrib_hash [8], attrib_name [x], attrib_len [4] + data_len
+                i_doc_len = Globals.ToSave.i_docs_data_header_length + (Globals.ToSave.i_docs_data_element_length * i_attrib_count) + i_data_len;
+                b_docs = new byte[i_doc_len];
+                Globals._service.InsertBytes(ref b_docs, (byte)1, i_docs_pos); i_docs_pos++; //active
+                Globals._service.InsertBytes(ref b_docs, BitConverter.GetBytes(Globals.storage_document_id), i_docs_pos); i_docs_pos += 8; //doc_id
+                Globals._service.InsertBytes(ref b_docs, b_doc_tag, i_docs_pos); i_docs_pos += 8; //doc_tag
+                Globals._service.InsertBytes(ref b_docs, BitConverter.GetBytes(l_time), i_docs_pos); i_docs_pos += 8; //created_at
+                Globals._service.InsertBytes(ref b_docs, BitConverter.GetBytes(l_time), i_docs_pos); i_docs_pos += 8; //changed_at
+
+                //go thru all attributes
+                for (i = 0; i < i_attrib_count; i++)
+                {
+                    //doc - active [1], data_type [1], attrib_hash [8], attrib_name [x], attrib_len [4] + data
+                    Globals._service.InsertBytes(ref b_docs, (byte)1, i_docs_pos); i_docs_pos++; //active
+                    Globals._service.InsertBytes(ref b_docs, lst_data_type[i], i_docs_pos); i_docs_pos++; //data_type
+                    //Globals._service.InsertBytes(ref b_docs, Globals._dataserializer.returnTypeAndRawByteArray(document.value[i], out b_data));
+                    //i_docs_pos++; //data_type
+                    //i_data_len = b_data.Length;
+                    //b_data_len = BitConverter.GetBytes(i_data_len); //data_len
+                    b_attrib_name = Encoding.ASCII.GetBytes(document.key[i]); //attrib_name
+                    b_hash = BitConverter.GetBytes(Globals._hash.CreateHash64bit(b_attrib_name));
+                    Globals._service.InsertBytes(ref b_docs, b_hash, i_docs_pos); i_docs_pos += 8; //attrib_hash
+                    Globals._service.InsertBytes(ref b_docs, b_attrib_name, i_docs_pos); i_docs_pos += Globals.storage_max_attribute_name_length; //attrib_name
+                    Globals._service.InsertBytes(ref b_docs, BitConverter.GetBytes(lst_data_len[i]), i_docs_pos); i_docs_pos += 4; //attrib_data_len
+                    //Globals.ToSave.i_docs_data_full_length += Globals.ToSave.i_docs_data_header_length;
+                    Globals._service.InsertBytes(ref b_docs, lst_data[i], i_docs_pos); i_docs_pos += lst_data_len[i]; //attrib_data
+                    //Globals.ToSave.i_docs_data_full_length += i_data_len;
+                    //calculate pos of attribute (data_len + data)
+                    l_pos_to_attrib = (i_docs_pos - lst_data_len[i] - 4); //- data - data_len
+
+                    //index - active_attrib [1], attrib_hash [8], attrib_pos [8]
+                    if ((i + 1) != i_attrib_count) //skip last element - 'document.tag'
+                    {
+                        Globals._service.InsertBytes(ref b_index, (byte)1, i_index_pos); i_index_pos++; //active
+                        if (lst_data_len[i] <= 8) //equal or less than 8 bytes
+                        {
+                            Globals._service.InsertBytes(ref b_index, (byte)1, i_index_pos); i_index_pos++; //attrib_data_len_more_than_8
+                            Globals._service.InsertBytes(ref b_index, b_hash, i_index_pos); i_index_pos += 8; //index_attrib_hash
+                            Globals._service.InsertBytes(ref b_index, lst_data[i], i_index_pos); i_index_pos += 8; //index_attrib_data
+                        }
+                        else
+                        {
+                            Globals._service.InsertBytes(ref b_index, (byte)0, i_index_pos); i_index_pos++; //attrib_data_len_more_than_8
+                            Globals._service.InsertBytes(ref b_index, b_hash, i_index_pos); i_index_pos += 8; //index_attrib_hash
+                            Globals._service.InsertBytes(ref b_index, BitConverter.GetBytes(l_pos_to_attrib), i_index_pos); i_index_pos += 8; //index_attrib_pos
+                        }
+                    }
+                }//for - attributes
+
+                //add to save list
+                Globals.ToSave.lst_index_to_save.Add(b_index);
+                Globals.ToSave.lst_docs_to_save.Add(b_docs);
+
+                Globals.ToSave.i_docs_data_full_length += i_doc_len;
+                Globals.ToSave.i_docs_index_full_length += i_index_len;
+
                 Globals.storage_document_id++;
+                Globals.ToSave.l_virtual_data_length += i_docs_pos;
                 bool_ret = true;
                 //Globals.ToSave.index_chunks_count += (document.GetCount() % Globals.storage_max_attributes_per_index_on_disk); //chunks to save
             }
