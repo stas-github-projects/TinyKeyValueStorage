@@ -8,8 +8,8 @@ namespace TinyKeyValueStorage
 {
     internal class IO
     {
-        private FileStream filestream_index;
-        private FileStream filestream_data;
+        internal FileStream filestream_index;
+        internal FileStream filestream_data;
 
         internal bool open_storage()
         {
@@ -48,6 +48,15 @@ namespace TinyKeyValueStorage
         {
             if (this.filestream_index == null || this.filestream_data == null) { return false; }
             else { return true; }
+        }
+
+        internal long index_file_length()
+        {
+            FileInfo finfo = new FileInfo(Globals.storage_filename + ".tki");
+            if (finfo.Exists)
+            { return finfo.Length; }
+            else
+            { return 0; }
         }
 
         internal long docs_file_length()

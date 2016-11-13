@@ -168,7 +168,48 @@ namespace TinyKeyValueStorage
         {
             bool bool_ret = false;
 
+            if (Globals._io.is_open() == false)
+            { Globals._io.open_storage(); }//reopen storage
 
+            //vars
+            int i = 0, ipos = 0, idoclen = 0, ilen = 0, icount = 0, ibuffer = 120;
+            long lpos = 0, lstoragelen = Globals._io.index_file_length();
+
+            //buffers
+            byte[] b_buffer = new byte[ibuffer];
+            byte b_active = new byte();
+            byte[] b_doc_tag = new byte[8];
+
+
+            //search for documents in storage
+            while (lpos < lstoragelen)
+            {
+                Globals._io.filestream_index.Position = lpos;
+                ilen = Globals._io.filestream_index.Read(b_buffer, 0, ibuffer);
+                //get document
+
+                ipos = 0;
+                for (i = 0; i < ilen; i++)
+                {
+                    //check if size of the next
+                    if (ipos + Globals.ToSave.i_docs_index_header_length > ilen)
+                    { break; }
+                    //parse header - active [1], doc_id [8], document_tag [8], full_index_length [4]
+                    b_active = b_buffer[ipos]; ipos++;//active
+                    ipos += 8; //doc_id
+                    b_doc_tag = Globals._service.GetBytes(b_buffer, ipos, 8); ipos += 8; //doc_tag - just a HASH
+                    idoclen = BitConverter.ToInt32(Globals._service.GetBytes(b_buffer, ipos, 8), 0); ipos += 4;
+
+                    if (b_active == 0)
+                    { ipos += (idoclen - Globals.ToSave.i_docs_index_header_length); lpos += idoclen; }
+                    else 
+                    {
+                        //start parse attributes - active_attrib [1], attrib_data_len_more_than_8 [1], attrib_hash [8], attrib_pos [8]
+                        ipos += (idoclen - Globals.ToSave.i_docs_index_header_length); lpos += idoclen;
+                    }
+
+                }//for
+            }//while
 
             return await Task.FromResult(bool_ret);
         }

@@ -18,7 +18,7 @@ namespace TinyKeyValueStorage_test
 
             string xtext = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce lectus neque, pretium in nisl eget, tincidunt placerat ex. Etiam lorem nibh, bibendum non mollis sed, porttitor ac metus. Fusce interdum tortor ac volutpat hendrerit. Morbi nec mi in ex vulputate consectetur. Cras bibendum mi ac varius rutrum. Aliquam eu diam quis velit aliquet blandit ut vitae sapien. Praesent sed velit ut odio tempus posuere. Phasellus risus enim, mattis eget lacus sed, condimentum accumsan orci.";
             _storage.open("test");
-            /**/
+            /**
             for (int i = 0; i < 100000; i++)
             {
                 TinyKeyValueStorage.TinyKeyValueStorage.Document _doc = new TinyKeyValueStorage.TinyKeyValueStorage.Document("goods_toys");
@@ -34,8 +34,8 @@ namespace TinyKeyValueStorage_test
 
             //s.Start();
             //s.Stop();
-         
-            //_storage.query("tag='good_toys',model>10, model<30");
+
+            var g = _storage.query("tag='good_toys',model>10, model<30");
 
 
             s.Stop();
